@@ -145,11 +145,12 @@ roslaunch package-name launch-file-name arg-name:=arg-value
 
 Re-build the package and source the environment variable
 ```bash
-catkin build hello_world # Compile a ROS package
+cd ~/catkin_ws/src/      # Move to src directory
+catkin build hello_world # Compile the ROS package hello_world
 source devel/setup.bash  # Source the ROS env variable
 ```
 
-### RUN
+### RUN using launch file
 
 ```bash
 roslaunch hello_world hello_world.launch
