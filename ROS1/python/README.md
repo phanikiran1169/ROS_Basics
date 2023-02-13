@@ -1,9 +1,5 @@
 # ROS 1 Basics
 ## Creating our first package
-1. Create a package
-2. Create a node [Python]
-3. Compile
-4. Run 
 
 ### Create a Package 
 First we create our catkin workspace and source directory
@@ -17,6 +13,9 @@ We use the catkin_create_pkg command to create a new package called "hello_world
 catkin_create_pkg hello_world rospy # Create a package
 # rospy is python client library for ROS
 ```
+![](https://user-images.githubusercontent.com/17789814/218476112-c50a2c72-4cae-4d7f-97cb-32b3d852c0cd.png)
+
+
 
 ### Create a node
 ```bash
@@ -53,12 +52,17 @@ Before we run our first program, we need to run the master node i.e. `roscore`. 
 ```bash
 roscore
 ```
+![](https://user-images.githubusercontent.com/17789814/218477414-0a856813-cb88-4335-a61c-238a1c6ff4e6.png)
+
+
 ROS is a centralized system, a master node (program) is always needed for other nodes and should be executed before other nodes. roscore starts this master node.
 
 In the terminal where the file `devel/setup.bash` was sourced, run the following command (if not you can run the command `source devel/setup.bash` in the terminal)
 ```bash
 rosrun hello_world hello_world.py
 ```
+![](https://user-images.githubusercontent.com/17789814/218477454-91c31201-3387-4799-bdb0-f049547643a9.png)
+
 
 ### Create a launch file
 
@@ -67,6 +71,12 @@ rosrun hello_world hello_world.py
 One way to execute a program is to launch one node at a time which is what was done above where `roscore` and `hello_world.py` were run separately. This is fine if we have just two nodes, but what do we do if we have multiple nodes? Launching each node one-by-one can get inefficient really quickly.
 
 Fortunately, ROS has a tool called [roslaunch](http://wiki.ros.org/roslaunch) that enables you to launch multiple nodes all at once.
+
+Basic features:
+* Before starting any nodes, roslaunch will determine whether roscore is already running and, if not, start it automatically.
+* All of the nodes in a launch file are started at roughly the same time. As a result, you cannot be sure about the order in which the nodes will initialize themselves. Well-written ROS nodes don’t care about the order in which they and their siblings start up.
+* By default the standard output from launched nodes is not the terminal but a log file (∼/.ros/log/run_id/node_name-number-stdout.log). You can check your run_id folder and browse the rosout.log file.
+* To terminate an active roslaunch, use Ctrl-C . This signal will attempt to gracefully shut down each active node from the launch.
 
 We now write a launch file to run both the nodes. 
 
@@ -88,14 +98,14 @@ File structure explained:
 Like every XML document, launch files have exactly one root element. It is called launch. All of the other elements of each launch file should be enclosed between these tags.
 
 2. The node element: &lt;node&gt; ... &lt;/node&gt;
-- pkg (required): The name of the package the node belongs to.
-- type (required): The name of the executable file that starts the node.
-- name (required): The name of the node. This overrides any name that the node would normally assign to itself in its call to ros::init. It should be a relative name (without mention of any namespaces), not a global name.
-- respawn (optional): If set to “true” roslaunch restarts the node when it terminates.
-- required (optional): If a node is labeled as required then when it is terminated roslaunch terminates all other nodes.
-- launch-prefix (optional): Used to insert the given prefix at the start of the command line that runs the node. The prefix “xterm-e” starts a new terminal window.
-- output (optional): If set to “screen” (for only a single node) allows the standard output of the node be the terminal and not a log file.
-- ns (optional): To set a namespace.
+   * pkg (required): The name of the package the node belongs to.
+   * type (required): The name of the executable file that starts the node.
+   * name (required): The name of the node. This overrides any name that the node would normally assign to itself in its call to ros::init. It should be a relative name (without mention of any namespaces), not a global name.
+   * respawn (optional): If set to “true” roslaunch restarts the node when it terminates.
+   * required (optional): If a node is labeled as required then when it is terminated roslaunch terminates all other nodes.
+   * launch-prefix (optional): Used to insert the given prefix at the start of the command line that runs the node. The prefix “xterm-e” starts a new terminal window.
+   * output (optional): If set to “screen” (for only a single node) allows the standard output of the node be the terminal and not a log file.
+   * ns (optional): To set a namespace.
 
 3. The include element: &lt;include&gt; … &lt;/include&gt;
 This element allows you to include the contents of another launch file, including all of its nodes and parameters.
@@ -133,6 +143,17 @@ roslaunch package-name launch-file-name arg-name:=arg-value
 <arg name=”arg-name” value=”arg-value”/>
 ```
 
+Re-build the package and source the environment variable
+```bash
+catkin build hello_world # Compile a ROS package
+source devel/setup.bash  # Source the ROS env variable
+```
 
+### RUN
 
+```bash
+roslaunch hello_world hello_world.launch
+```
+
+![](https://user-images.githubusercontent.com/17789814/218476342-c4a626b8-9100-4802-8e99-2d009420f608.png)
 
