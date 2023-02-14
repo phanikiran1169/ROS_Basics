@@ -304,17 +304,17 @@ Subscribers:
 ROS has a centralized parameter server that keeps track of a collection of values, to be queried by the nodes, that basically store configuration information that does not change (much) over time.
 
 ## Creating our second package
-Lets try to apply the above concepts by .
+Lets try to apply the above concepts by creating our second package. The aim of this package is to convert the OpenCV images [cv::Mat](https://docs.opencv.org/3.3.0/d3/d63/classcv_1_1Mat.html) format to ROS compatible format [sensor_msgs.Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)
 
 ### Create a Package
-We create a new package called `image_pipeline` . This package depends on the libraries `rospy`, `cv_bridge`, `image_transport` and `sensor_msgs`
+We create a new package called `image_pipeline`. This package depends on the libraries `rospy`, `cv_bridge`, `image_transport` and `sensor_msgs`
 
 ```bash
 cd ~/catkin_ws/src/     # Move to src directory
 catkin_create_pkg image_pipeline rospy cv_bridge image_transport sensor_msgs
 ```
 
-### Create a node
+### Create a Publisher node
 ```bash
 cd image_pipeline/ && touch src/publisher.py # Create a empty file
 chmod a+x src/publisher.py # Execution permission
@@ -328,10 +328,10 @@ Open `publisher.py` in a text editor of your preference and copy paste the follo
 import sys
 import rospy
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 import cv2
+from cv_bridge import CvBridge
 
-class imageConverter:
+class convertCV2toROS:
     def __init__(self):
         self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)
         self.bridge = CvBridge()
@@ -357,11 +357,11 @@ class imageConverter:
                 rate.sleep()
 
 def main(args):
-    rospy.init_node('image_converter')
+    rospy.init_node('CV2_to_ROS')
     try:
-        _ = imageConverter()
+        _ = convertCV2toROS()
     except rospy.ROSInterruptException:
-        pass
+        print("Publisher node shutting down")
 
 if __name__ == '__main__':
     main(sys.argv)
@@ -373,8 +373,8 @@ if __name__ == '__main__':
 import sys
 import rospy
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 import cv2
+from cv_bridge import CvBridge
 ```
  * rospy: To use ROS features such as Topics, Services, Parameters etc. through python
  * sys: To pass/access arguments from interpretor to script and vice versa
@@ -383,13 +383,13 @@ import cv2
  * cv2: To re-use features of OpenCV library
 
 ```python
-class imageConverter:
+class convertCV2toROS:
     def __init__(self):
         self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)
         self.bridge = CvBridge()
         self.image_publisher()
 ```
-Define a class imageConverter. 
+Define a class convertCV2toROS. 
 `self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)` declares that the node is publishing to the *image_topic* topic using the message type Image. Image here is actually the class sensor_msgs.msg.Image.
 
 In the following two lines ,we initialize a CvBridge object and call the method `image_publisher()`
@@ -432,7 +432,7 @@ Logic to select the input for the video which is being published
 def main(args):
     rospy.init_node('image_converter')
     try:
-        _ = imageConverter()
+        _ = convertCV2toROS()
     except rospy.ROSInterruptException:
         pass
 ```
@@ -446,49 +446,19 @@ Copy paste the following code in `param.yml`
 
 ```xml
 image_acquisition:
-  input_type: "camera_usb" #camera_usb, video
+  input_type: "video" #camera_usb, video
   
   camera_usb: 
       camera_node: 1
   
   video:
       video_node: 1
-      video_path_0: "/home/nullbyte/Desktop/myGit/ROS_Basics/ROS1/test_data/video/test_1.mp4"
+      video_path_0: "/home/sirhawk/catkin_ws/src/image_pipeline/test_data/video/test_1.mp4"
   
   frequency: 10
 ```
 
-### Create a Launch file
-```bash
-mkdir launch && touch launch/image_pipeline.launch # Create a empty lauch file
-```
-```bash
-image_pipeline.launch
-```
-
-```xml
-<launch>
-    <rosparam file="$(find image_pipeline)/config/param.yaml" />
-    <!-- image_pipeline launch file -->
-    <node pkg="image_pipeline" type="publisher.py" name="publisher"  output="screen">
-    </node>
-</launch>
-```
-
-### Compile
-```bash
-cd ~/catkin_ws/ # go to root directory of the packages
-catkin_make # Compile a ROS package
-source devel/setup.bash # Source the ROS env variable
-```
-
-### RUN
-```bash
-roslaunch image_pipeline image_pipeline.launch
-```
-
-#### output
-
+**NOTE**: Do not forget to edit the video file path in video_path_0
 
 ## Topic Subscriber
 ### Create a node
@@ -497,20 +467,21 @@ cd image_pipeline/ && touch src/subscriber.py # Create a empty file
 chmod a+x src/subscriber.py # Execution permission
 ```
 
-```bash
-subscriber.py
-```
+Copy paste the following code in `subscriber.py`
 
 ```python
 #!/usr/bin/env python3
+
 import sys
 import rospy
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
 import cv2
-class Subscriber:
+from cv_bridge import CvBridge, CvBridgeError
+
+
+class convertROStoCV2:
     def __init__(self):
-        self.image_sub = rospy.Subscriber("publisher", Image, self.callback)
+        self.image_sub = rospy.Subscriber("image_topic", Image, self.callback)
         self.bridge = CvBridge()
         
     def callback(self,data):
@@ -520,28 +491,46 @@ class Subscriber:
             cv2.waitKey(1)
         except CvBridgeError as e:
             print(e)
+
 def main(args):
-    rospy.init_node('subscriber')
-    Subscriber()
+    rospy.init_node('ROS_to_CV2', anonymous=True)
+    _ = convertROStoCV2()
     try:
         rospy.spin()
-    except KeyboardInterrupt:
+    except rospy.ROSInterruptException:
         print("Shutting down")
+
 if __name__ == '__main__':
     main(sys.argv)
 ```
 
-### Update the Launch file
+#### Code explained
+
+The code for `subscriber.py` is very similar to `publisher.py` except that we have introduced a new callback-based mechanism for subscribing to messages.
+
+`self.image_sub = rospy.Subscriber("image_topic", Image, self.callback)`
+This declares that your node is subscribes to `image_topic` which of the type `sensor_msgs.msg.Image`. When new messages are received, callback (here it is self.callback) is invoked with the message as the first argument. 
+
+We also changed up the call to rospy.init_node() somewhat. We've added the anonymous=True keyword argument. ROS requires that each node have a unique name. If a node with the same name comes up, it bumps the previous one. This is so that malfunctioning nodes can easily be kicked off the network. The anonymous=True flag tells rospy to generate a unique name for the node so that you can have multiple listener.py nodes run easily.
+
+The final addition, rospy.spin() simply keeps your node from exiting until the node has been shutdown. Unlike roscpp, rospy.spin() does not affect the subscriber callback functions, as those have their own threads.
+
+### Create a Launch file
 ```bash
-image_pipeline.launch
+mkdir launch && touch launch/image_pipeline.launch # Create a empty lauch file
 ```
+Copy paste the following contents in the launch file
 
 ```xml
 <launch>
+    <!-- Load the parameter param.yaml file to the ROS Parameter Server -->
     <rosparam file="$(find image_pipeline)/config/param.yaml" />
-    <!-- image_pipeline launch file -->
+    
+    <!-- Launch the publisher node -->
     <node pkg="image_pipeline" type="publisher.py" name="publisher"  output="screen">
     </node>
+
+    <!-- Launch the subscriber node -->
     <node pkg="image_pipeline" type="subscriber.py" name="subscriber"  output="screen">
     </node>
 </launch>
@@ -549,9 +538,9 @@ image_pipeline.launch
 
 ### Compile and build the package
 ```bash
-cd ~/catkin_ws/ # go to root directory of the packages
-catkin_make # Compile a ROS package
-source devel/setup.bash # Source the ROS env variable
+cd ~/catkin_ws/                  # go to root directory of the packages
+catkin build image_pipeline      # Compile a ROS package
+source devel/setup.bash          # Source the ROS env variable
 ```
 
 ### Launch your publisher and subscriber nodes
@@ -561,8 +550,22 @@ roslaunch image_pipeline image_pipeline.launch
 
 #### Output
 
+Data acquired by the subscriber node
+![](https://user-images.githubusercontent.com/17789814/218756726-3c0246fd-5af3-411d-b364-1f743b8d274b.png)
 
+ROS Graph
+![](https://user-images.githubusercontent.com/17789814/218757432-611b248c-a2ee-40d7-8ea5-9af67fabbd61.png)
 
+```bash
+rostopic info /image_topic
+```
 
+```
+Type: sensor_msgs/Image
 
-### ROS 
+Publishers: 
+ * /publisher (http://phani:46223/)
+
+Subscribers: 
+ * /subscriber (http://phani:37603/)
+```
