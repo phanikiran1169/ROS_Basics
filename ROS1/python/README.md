@@ -1,7 +1,10 @@
 # ROS 1 Basics
-## Creating our first package
 
-### Create a Package 
+### Creating our first package
+
+#### What is a package ?
+Before we create our own package, lets try to understand what a package means. Packages are the main unit for organizing software in ROS. A package may contain ROS runtime processes (nodes), a ROS-dependent library, datasets, configuration files, or anything else that is usefully organized together. Packages are the most atomic build item and release item in ROS. Meaning that the most granular thing you can build and release is a package.
+
 First we create our catkin workspace and source directory
 ```bash
 mkdir -p ~/catkin_ws/src/  # Create a directory
@@ -15,9 +18,49 @@ catkin_create_pkg hello_world rospy # Create a package
 ```
 ![](https://user-images.githubusercontent.com/17789814/218476112-c50a2c72-4cae-4d7f-97cb-32b3d852c0cd.png)
 
+### ROS Computation graph
+
+The Computation Graph is the peer-to-peer network of ROS processes that are processing data together. The basic Computation Graph concepts of ROS are nodes, Master, Parameter Server, messages, services, topics, and bags, all of which provide data to the Graph in different ways.
+
+These concepts are implemented in the ros_comm repository. We explore these concepts as we progress in the tutorials.
+
+### ROS Debug tools / Getting information on ROS graph
+
+#### rosnode
+`rosnode` displays information about the ROS nodes that are currently running. Its options are:
+```bash
+rosnode ping          # test connectivity to node
+rosnode list          # list active nodes
+rosnode info          # print information about node
+rosnode machine       # list nodes running on a particular machine or list machines
+rosnode kill          # kill a running node
+rosnode cleanup       # purge registration information of unreachable nodes
+```
+
+#### rqt_graph
+rqt_graph is the easiest way to visualize the publish-subscribe relationships between ROS nodes. Just run the following command in terminal:
+
+```bash
+rqt_graph
+```
+
+An example when *turtlesim* node is run
+![](https://user-images.githubusercontent.com/17789814/218658515-afd49abd-4093-4a87-9325-3f697968492f.svg)
 
 
 ### Create a node
+
+#### What is a node ?
+A ROS node, according to [ROS wiki](http://wiki.ros.org/Nodes), is basically a process that performs computation. It is an executable program running inside your application. You will write many nodes and put them into packages.
+
+Nodes are combined into a graph and communicate with each other using ROS topics, services, actions, etc.
+
+For example, one node controls a laser range-finder, one node controls the wheel motors, one node performs localization, one node performs path planning, one Node provides a graphical view of the system, and so on. A ROS node is written with the use of a ROS client library, such as roscpp or rospy.
+
+You can find more information about ROS nodes in [ROS wiki](http://wiki.ros.org/Nodes).
+
+Let's create a very simple node and try to understand the main components that create a node.
+
 ```bash
 cd hello_world/ && touch src/hello_world.py # Create a empty file
 chmod a+x src/hello_world.py # Execution permission
@@ -54,8 +97,9 @@ roscore
 ```
 ![](https://user-images.githubusercontent.com/17789814/218477414-0a856813-cb88-4335-a61c-238a1c6ff4e6.png)
 
-
-ROS is a centralized system, a master node (program) is always needed for other nodes and should be executed before other nodes. roscore starts this master node.
+#### Why is this needed ?
+The simple answer is, ROS is a centralized system, a master node (program) is always needed for other nodes and should be executed before other nodes. 
+The ROS Master provides name registration and lookup to the rest of the Computation Graph. Without the Master, nodes would not be able to find each other, exchange messages, or invoke services. `roscore` starts this master node.
 
 In the terminal where the file `devel/setup.bash` was sourced, run the following command (if not you can run the command `source devel/setup.bash` in the terminal)
 ```bash
@@ -158,3 +202,10 @@ roslaunch hello_world hello_world.launch
 
 ![](https://user-images.githubusercontent.com/17789814/218476342-c4a626b8-9100-4802-8e99-2d009420f608.png)
 
+###
+
+### ROS parameters
+
+### ROS messages
+
+### ROS 
