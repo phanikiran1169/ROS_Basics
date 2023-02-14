@@ -602,7 +602,21 @@ A service data type determines the content of messages by a collection of named 
 
 ## Creating our third package
 
+### Create a Package
+We create a new package called `turtlesim_services`. This package depends on the libraries `rospy`, `turtlesim`, `geometry_msgs`, `std_msgs` and `message_generation
+
+```bash
+cd ~/catkin_ws/src/     # Move to src directory
+catkin_create_pkg turtlesim_services rospy turtlesim geometry_msgs std_msgs message_generation
+```
+
 ### Create a publisher-server node
+```bash
+cd turtlesim_services/ && touch src/pub_vel.py # Create a empty file
+chmod a+x src/pub_vel.py # Execution permission
+```
+
+Copy paste the following code in `pub_vel.py` 
 
 ```python
 #!/usr/bin/env python3
@@ -645,6 +659,32 @@ def main(args):
     
 if __name__ == "__main__":
     main(sys.argv)
+```
+
+#### Code explained
+
+### Create a Launch file
+```bash
+mkdir launch && touch launch/turtlesim_services.launch # Create a empty lauch file
+```
+Copy paste the following contents in the launch file
+
+```xml
+<launch>
+
+</launch>
+```
+
+### Compile and build the package
+```bash
+cd ~/catkin_ws/                      # go to root directory of the packages
+catkin build turtlesim_services      # Compile a ROS package
+source devel/setup.bash              # Source the ROS env variable
+```
+
+### Launch your nodes
+```bash
+roslaunch 
 ```
 
 **Pro Tip** :grin: : When do we modity `CMakelists.txt` ?
