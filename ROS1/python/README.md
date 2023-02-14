@@ -333,7 +333,7 @@ cd ~/catkin_ws/src/     # Move to src directory
 catkin_create_pkg image_pipeline rospy cv_bridge image_transport sensor_msgs
 ```
 
-### Create a pblisher node
+### Create a publisher node
 ```bash
 cd image_pipeline/ && touch src/publisher.py # Create a empty file
 chmod a+x src/publisher.py # Execution permission
@@ -600,10 +600,57 @@ A client node sends some data (called a request) to a server node and waits for 
 
 A service data type determines the content of messages by a collection of named fields, and is divided into two parts, the request and the response.
 
-**NOTE**: We did not modify `CMakelists.txt` until now. But now we have to modify it
+## Creating our third package
+
+### Create a publisher-server node
+
+```python
+#!/usr/bin/env python3
+
+import sys
+import rospy
+from std_srvs.srv import Empty, EmptyResponse
+from geometry_msgs.msg import Twist
+
+class turtle:
+    def __init__(self):
+        self.server = rospy.Service('toggle_forward', Empty, self.toggleForward)
+        self.pub_vel = rospy.Publisher("turtle1/cmd_vel", Twist, queue_size=100)
+        
+        self.forward = False
+        self.twist = Twist()
+
+        self.commandVel()
+
+    def toggleForward(self, req):
+        self.forward = not self.forward
+        rospy.loginfo("Now sending %s commands", "Forward" if self.forward else "Rotate")
+        return EmptyResponse()
+
+    def commandVel(self):
+        rate = rospy.Rate(2)
+
+        while not rospy.is_shutdown():
+
+            msg = self.twist
+            msg.linear.x = 1.0 if self.forward else 0.0
+            msg.angular.z = 0.0 if self.forward else 1.0
+            
+            self.pub_vel.publish(msg)
+            rate.sleep()
+
+def main(args):
+    rospy.init_node("toggle_forward_server")
+    _ = turtle()
+    
+if __name__ == "__main__":
+    main(sys.argv)
+```
+
+**Pro Tip** :grin: : When do we modity `CMakelists.txt` ?
 
 We have to modify the CmakeLists.txt in python too but not as systematically as with roscpp. In python if you want to run a simple node with no dependencies you just have to make sure to use the command `chmod +x your_node.py` to get an executable that rosrun can use. In cpp, whenever you create a node you have to create the executable from the CMakeLists.txt by adding the following line:
 
-`add_executable(talker src/talker.cpp)`
+`add_executable(talker src/your_node.cpp)`
 
-We don't need to do that in python. But we will have to modify the CMakeList if you want to create a custom message, to use a client/server and to list all the dependencies of your package. ([Ref link](https://answers.ros.org/question/306236/do-i-have-to-modify-cmakeliststxt-for-a-python-node/))
+We don't need to do that in python. But we will have to modify the CMakeList if you want to create a custom message, to use a client/server and to list all the dependencies of your package. ([Ref](https://answers.ros.org/question/306236/do-i-have-to-modify-cmakeliststxt-for-a-python-node/))
