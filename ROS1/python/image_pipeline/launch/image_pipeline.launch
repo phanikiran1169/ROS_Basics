@@ -1,0 +1,12 @@
+<launch>
+    <!-- Load the parameter param.yaml file to the ROS Parameter Server -->
+    <rosparam file="$(find image_pipeline)/config/param.yaml" />
+    
+    <!-- Launch the publisher node -->
+    <node pkg="image_pipeline" type="publisher.py" name="publisher"  output="screen">
+    </node>
+
+    <!-- Launch the subscriber node -->
+    <node pkg="image_pipeline" type="subscriber.py" name="subscriber"  output="screen">
+    </node>
+</launch>
