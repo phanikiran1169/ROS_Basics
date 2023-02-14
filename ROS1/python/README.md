@@ -206,40 +206,40 @@ Like every XML document, launch files have exactly one root element. It is calle
    * ns (optional): To set a namespace.
 
 3. The include element: &lt;include&gt; … &lt;/include&gt;
-This element allows you to include the contents of another launch file, including all of its nodes and parameters.
+  This element allows you to include the contents of another launch file, including all of its nodes and parameters.
 
-```xml
-<include file=”path-to-launch-file” />
-```
+  ```xml
+  <include file=”path-to-launch-file” />
+  ```
 
-A find substitution to search for a package is usually used in order not to explicitly specify the path:
+  A find substitution to search for a package is usually used in order not to explicitly specify the path:
 
-```xml
-<include file=”$(find package-name)/launch-file-name” />
-```
+  ```xml
+  <include file=”$(find package-name)/launch-file-name” />
+  ```
 4. The arg element: &lt;arg&gt; … &lt;/arg&gt;
 
-This element is used to help make launch files configurable. It is defined as:
-```xml
-<arg name=”arg-name” />
-```
-And used with an arg substitution:
-```xml
-$(arg arg-name)
-```
-The value of the arguments:
-- Is set at the command line:
-```bash
-roslaunch package-name launch-file-name arg-name:=arg-value
-```
-- Is defaulted with a value that can be overriden at the command line:
-```xml
-<arg name=”arg-name” default=”arg-value”/>
-```
-- Is defaulted with a value that cannot be overriden at the command line:
-```xml
-<arg name=”arg-name” value=”arg-value”/>
-```
+  This element is used to help make launch files configurable. It is defined as:
+  ```xml
+  <arg name=”arg-name” />
+  ```
+  And used with an arg substitution:
+  ```xml
+  $(arg arg-name)
+  ```
+  The value of the arguments:
+  - Is set at the command line:
+  ```bash
+  roslaunch package-name launch-file-name arg-name:=arg-value
+  ```
+  - Is defaulted with a value that can be overriden at the command line:
+  ```xml
+  <arg name=”arg-name” default=”arg-value”/>
+  ```
+  - Is defaulted with a value that cannot be overriden at the command line:
+  ```xml
+  <arg name=”arg-name” value=”arg-value”/>
+  ```
 
 Re-build the package and source the environment variable
 ```bash
@@ -303,8 +303,28 @@ Subscribers:
 ### ROS parameter server
 ROS has a centralized parameter server that keeps track of a collection of values, to be queried by the nodes, that basically store configuration information that does not change (much) over time.
 
+The parameters in this server can be accessed through 3 ways:
+* Command line
+  * To list existing parameters
+    `rosparam list`
+  * To query the value of the parameter
+    `rosparam get parameter_name`
+  * To set the value of a parameter:
+    `rosparam set parameter_name parameter_value`
+  
+* C++/Python file
+  The python interface to ROS parameters is straightforward:
+  * rospy.get_param()
+  * rospy.set_param()
+  
+* Launch file
+  Parameters can also be set from launch files using the param element:
+  ```xml
+  <param name=”param-name” value=”param-value” />
+  ```
+
 ## Creating our second package
-Lets try to apply the above concepts by creating our second package. The aim of this package is to convert the OpenCV images [cv::Mat](https://docs.opencv.org/3.3.0/d3/d63/classcv_1_1Mat.html) format to ROS compatible format [sensor_msgs.Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html)
+Lets try to apply the above concepts by creating our second package. The aim of this package is that we create a publisher node which converts the OpenCV images [cv::Mat](https://docs.opencv.org/3.3.0/d3/d63/classcv_1_1Mat.html) format to ROS compatible format [sensor_msgs.Image](http://docs.ros.org/en/api/sensor_msgs/html/msg/Image.html) and publishers it on a topic. We create another subscriber node, that subscribes to the same topic, and re-converts the data back to OpenCV image and displays it.
 
 ### Create a Package
 We create a new package called `image_pipeline`. This package depends on the libraries `rospy`, `cv_bridge`, `image_transport` and `sensor_msgs`
@@ -314,7 +334,7 @@ cd ~/catkin_ws/src/     # Move to src directory
 catkin_create_pkg image_pipeline rospy cv_bridge image_transport sensor_msgs
 ```
 
-### Create a Publisher node
+### Create a pblisher node
 ```bash
 cd image_pipeline/ && touch src/publisher.py # Create a empty file
 chmod a+x src/publisher.py # Execution permission
@@ -460,8 +480,7 @@ image_acquisition:
 
 **NOTE**: Do not forget to edit the video file path in video_path_0
 
-## Topic Subscriber
-### Create a node
+### Create a subscriber node
 ```bash
 cd image_pipeline/ && touch src/subscriber.py # Create a empty file
 chmod a+x src/subscriber.py # Execution permission
@@ -511,9 +530,9 @@ The code for `subscriber.py` is very similar to `publisher.py` except that we ha
 `self.image_sub = rospy.Subscriber("image_topic", Image, self.callback)`
 This declares that your node is subscribes to `image_topic` which of the type `sensor_msgs.msg.Image`. When new messages are received, callback (here it is self.callback) is invoked with the message as the first argument. 
 
-We also changed up the call to rospy.init_node() somewhat. We've added the anonymous=True keyword argument. ROS requires that each node have a unique name. If a node with the same name comes up, it bumps the previous one. This is so that malfunctioning nodes can easily be kicked off the network. The anonymous=True flag tells rospy to generate a unique name for the node so that you can have multiple listener.py nodes run easily.
+We also changed up the call to `rospy.init_node()`. We've added the `anonymous=True` keyword argument. ROS requires that each node have a unique name. If a node with the same name comes up, it bumps the previous one. This is so that malfunctioning nodes can easily be kicked off the network. The `anonymous=True` flag tells rospy to generate a unique name for the node so that you can have multiple listener.py nodes run easily.
 
-The final addition, rospy.spin() simply keeps your node from exiting until the node has been shutdown. Unlike roscpp, rospy.spin() does not affect the subscriber callback functions, as those have their own threads.
+The final addition, `rospy.spin()` simply keeps your node from exiting until the node has been shutdown. Unlike roscpp, `rospy.spin()` does not affect the subscriber callback functions, as those have their own threads.
 
 ### Create a Launch file
 ```bash
@@ -569,3 +588,5 @@ Publishers:
 Subscribers: 
  * /subscriber (http://phani:37603/)
 ```
+
+
