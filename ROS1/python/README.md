@@ -310,7 +310,6 @@ Lets try to apply the above concepts by .
 We create a new package called `image_pipeline` . This package depends on the libraries `rospy`, `cv_bridge`, `image_transport` and `sensor_msgs`
 
 ```bash
-mkdir ~/catkin_ws/src/  # Create a directory
 cd ~/catkin_ws/src/     # Move to src directory
 catkin_create_pkg image_pipeline rospy cv_bridge image_transport sensor_msgs
 ```
@@ -332,13 +331,13 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
 
-class Publisher:
+class imageConverter:
     def __init__(self):
-        self.image_pub = rospy.Publisher("publisher", Image, queue_size=100)
+        self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)
         self.bridge = CvBridge()
         self.image_publisher()
-    def image_publisher(self,):
-        
+    
+    def image_publisher(self):
         frequency = rospy.get_param("/image_acquisition/frequency")
         rate = rospy.Rate(frequency)
         input_type = rospy.get_param("/image_acquisition/input_type")
@@ -350,18 +349,94 @@ class Publisher:
             video_path = rospy.get_param("/image_acquisition/video/video_path_0")
             video_capture = cv2.VideoCapture(video_path)
         
-        while True:
+        while not rospy.is_shutdown():
             ret, frame = video_capture.read()
             if frame is not None:
                 msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
                 self.image_pub.publish(msg)
                 rate.sleep()
+
 def main(args):
-    rospy.init_node('publisher')
-    Publisher()
+    rospy.init_node('image_converter')
+    try:
+        _ = imageConverter()
+    except rospy.ROSInterruptException:
+        pass
+
 if __name__ == '__main__':
     main(sys.argv)
 ```
+
+#### Code explained
+
+```python
+import sys
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+```
+ * rospy: To use ROS features such as Topics, Services, Parameters etc. through python
+ * sys: To pass/access arguments from interpretor to script and vice versa
+ * sensor_msgs.msg: To re-use the Image message type for publishing and subscribing
+ * cv_bridge: To convert ROS images to OpenCV images
+ * cv2: To re-use features of OpenCV library
+
+```python
+class imageConverter:
+    def __init__(self):
+        self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)
+        self.bridge = CvBridge()
+        self.image_publisher()
+```
+Define a class imageConverter. 
+`self.image_pub = rospy.Publisher("image_topic", Image, queue_size=100)` declares that the node is publishing to the *image_topic* topic using the message type Image. Image here is actually the class sensor_msgs.msg.Image.
+
+In the following two lines ,we initialize a CvBridge object and call the method `image_publisher()`
+
+```python
+    def image_publisher(self):
+        frequency = rospy.get_param("/image_acquisition/frequency")
+        rate = rospy.Rate(frequency)
+        input_type = rospy.get_param("/image_acquisition/input_type")
+```
+We define a method called `image_publisher`.
+
+To access the value assigned in the frequency parameter (stored in ROS Parameter Server) we use the command `rospy.get_param("/image_acquisition/frequency")`. Similarly for `input_type = rospy.get_param("/image_acquisition/input_type")`. These parameters are configured through the config file `param.yaml`. 
+
+`rospy.Rate(frequency)` is a rate object to control the publishing rate (In this example controlled through the frequency of while loop)
+
+```python
+        video_capture = None
+        if input_type == "camera_usb":
+            video_capture = cv2.VideoCapture(0)
+        else:
+            video_path = rospy.get_param("/image_acquisition/video/video_path_0")
+            video_capture = cv2.VideoCapture(video_path)
+```
+Logic to select the input for the video which is being published
+
+
+```python
+        while not rospy.is_shutdown():
+            ret, frame = video_capture.read()
+            if frame is not None:
+                msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
+                self.image_pub.publish(msg)
+                rate.sleep()
+```
+
+`msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")` each frame of the video is converted to ROS compatible image i.e. sensor_msgs.Image type. `self.image_pub.publish(msg)` publishes the msg on the topic `image_topic`
+
+```python
+def main(args):
+    rospy.init_node('image_converter')
+    try:
+        _ = imageConverter()
+    except rospy.ROSInterruptException:
+        pass
+```
+In addition to the standard Python `__main__` check, this catches a `rospy.ROSInterruptException` exception, which can be thrown by `rospy.sleep()` and `rospy.Rate.sleep()` methods when Ctrl-C is pressed or your Node is otherwise shutdown. The reason this exception is raised is so that you don't accidentally continue executing code after the sleep().
 
 ### Create a config file
 ```bash
