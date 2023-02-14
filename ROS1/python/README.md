@@ -599,3 +599,11 @@ A client node sends some data (called a request) to a server node and waits for 
 ![](https://user-images.githubusercontent.com/17789814/218767053-7f393703-e0af-478c-9a15-cfdbbdd18980.png)
 
 A service data type determines the content of messages by a collection of named fields, and is divided into two parts, the request and the response.
+
+**NOTE**: We did not modify `CMakelists.txt` until now. But now we have to modify it
+
+We have to modify the CmakeLists.txt in python too but not as systematically as with roscpp. In python if you want to run a simple node with no dependencies you just have to make sure to use the command `chmod +x your_node.py` to get an executable that rosrun can use. In cpp, whenever you create a node you have to create the executable from the CMakeLists.txt by adding the following line:
+
+`add_executable(talker src/talker.cpp)`
+
+We don't need to do that in python. But we will have to modify the CMakeList if you want to create a custom message, to use a client/server and to list all the dependencies of your package. ([Ref link](https://answers.ros.org/question/306236/do-i-have-to-modify-cmakeliststxt-for-a-python-node/))
