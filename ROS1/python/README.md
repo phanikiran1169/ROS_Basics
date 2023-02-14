@@ -43,10 +43,63 @@ rqt_graph is the easiest way to visualize the publish-subscribe relationships be
 ```bash
 rqt_graph
 ```
-
-An example when *turtlesim* node is run
+An example when [turtlesim](https://wiki.ros.org/turtlesim) node is run
 ![](https://user-images.githubusercontent.com/17789814/218658515-afd49abd-4093-4a87-9325-3f697968492f.svg)
 
+#### rostopic
+`rostopic` tool displays information about the ROS topics that are currently available. Its options are:
+```bash
+rostopic bw     # display bandwidth used by topic
+rostopic delay  # display delay of topic from timestamp in header
+rostopic echo   # print messages to screen
+rostopic find   # find topics by type
+rostopic hz     # display publishing rate of topic
+rostopic info   # print information about active topic
+rostopic list   # list active topics
+rostopic pub    # publish data to topic
+rostopic type   # print topic or field type
+```
+
+#### rosmsg
+`rosmsg` is a command-line tool for displaying information about ROS Message types
+
+```bash
+rosmsg show	     # Show message description
+rosmsg info	     # Alias for rosmsg show
+rosmsg list	     # List all messages
+rosmsg md5	     # Display message md5sum
+rosmsg package	  # List messages in a package
+rosmsg packages  # List packages that contain messages
+```
+
+For example, we can view the structure of a message using the following command"
+```bash
+rosmsg show geometry_msgs/Twist
+```
+
+Output:
+```
+geometry_msgs/Vector3 linear
+  float64 x
+  float64 y
+  float64 z
+geometry_msgs/Vector3 angular
+  float64 x
+  float64 y
+  float64 z
+```
+
+#### rosparam
+`rosparam` is a command-line tool for getting, setting, and deleting parameters from the ROS Parameter Server.
+
+```bash
+rosparam set	   # set parameter
+rosparam get	   # get parameter
+rosparam load	   # load parameters from file
+rosparam dump	   # dump parameters to file
+rosparam delete	# delete parameter
+rosparam list	   # list parameter names
+```
 
 ### Create a node
 
