@@ -1,6 +1,6 @@
 # ROS 1 Basics
 
-### Creating our first package
+## Creating our first package
 
 #### What is a package ?
 Before we create our own package, lets try to understand what a package means. Packages are the main unit for organizing software in ROS. A package may contain ROS runtime processes (nodes), a ROS-dependent library, datasets, configuration files, or anything else that is usefully organized together. Packages are the most atomic build item and release item in ROS. Meaning that the most granular thing you can build and release is a package.
@@ -44,7 +44,8 @@ rqt_graph is the easiest way to visualize the publish-subscribe relationships be
 rqt_graph
 ```
 An example when [turtlesim](https://wiki.ros.org/turtlesim) node is run
-![](https://user-images.githubusercontent.com/17789814/218658515-afd49abd-4093-4a87-9325-3f697968492f.svg)
+
+![](https://user-images.githubusercontent.com/17789814/218673038-5f81a12f-f3a7-4c95-875e-adaa602cb42a.jpg)
 
 #### rostopic
 `rostopic` tool displays information about the ROS topics that are currently available. Its options are:
@@ -134,7 +135,7 @@ while not rospy.is_shutdown():     # Continous loop
    rate.sleep()                    # We sleep the needed time to maintain the above Rate
 ```
 
-### Compile
+### Compile and build the package
 ```bash
 cd ~/catkin_ws/ # go to root directory of the packages
 catkin build hello_world # Compile a ROS package
@@ -142,7 +143,7 @@ source devel/setup.bash # Source the ROS env variable
 ```
 NOTE: We are using `catkin build` from catkin_tools instead of `catkin_make`. To learn more about the differences, refer this [link](https://catkin-tools.readthedocs.io/en/latest/migration.html).
 
-### RUN
+### RUN your first program !!!
 
 Before we run our first program, we need to run the master node i.e. `roscore`. Open a new terminal and run the following command:
 ```bash
@@ -247,7 +248,7 @@ catkin build hello_world # Compile the ROS package hello_world
 source devel/setup.bash  # Source the ROS env variable
 ```
 
-### RUN using launch file
+#### RUN using launch file
 
 ```bash
 roslaunch hello_world hello_world.launch
@@ -255,10 +256,238 @@ roslaunch hello_world hello_world.launch
 
 ![](https://user-images.githubusercontent.com/17789814/218476342-c4a626b8-9100-4802-8e99-2d009420f608.png)
 
-###
+### Messages
+Nodes communicate with each other by passing messages. A message is simply a data structure, comprising typed fields.
+#### Standard messages
+Standard messages ([std_msgs](http://wiki.ros.org/std_msgs)) include common message types representing primitive data types and other basic message constructs, such as multiarrays.
 
-### ROS parameters
+Eg. Bool, Byte, ByteMultiArray, Int16, Int32, Float64, Char etc.
 
-### ROS messages
+#### Common messages
+Common messages ([common_msgs](http://wiki.ros.org/common_msgs)) group messages that are widely used by other ROS packages, i.e. messages for:
+* actions ([actionlib_msgs](http://wiki.ros.org/actionlib_msgs))
+* diagnostics ([diagnostic_msgs](http://wiki.ros.org/diagnostic_msgs))
+* geometric primitives ([geometry_msgs](http://wiki.ros.org/geometry_msgs))
+* robot navigation ([nav_msgs](http://wiki.ros.org/nav_msgs))
+* common sensors ([sensor_msgs](http://wiki.ros.org/sensor_msgs))
+
+### Topics
+Topics provide the means for nodes to communicate. Messages are routed via a transport system with publish / subscribe semantics. A node sends out a message by publishing it to a given topic.
+
+The topic is a name that is used to identify the content of the message. A node that is interested in a certain kind of data will subscribe to the appropriate topic. There may be multiple concurrent publishers and subscribers for a single topic, and a single node may publish and/or subscribe to multiple topics. 
+
+Logically, one can think of a topic as a strongly typed message bus. Each bus has a name, and anyone can connect to the bus to send or receive messages as long as they are the right type.
+
+For example:
+Consider a node called `/turtlesim` which is controlled through keyboard. The control command is the velocity. The node `/turtlesim` obtains this information by *subscribing* to the topic `/turtle1/cmd_vel`.
+There is another node `/teleop_turtle` that converts the keyboard keystrokes into velocity commands and *publishes* the command velocity on the topic `/turtle1/cmd_vel`. This can be visualized as follows:
+
+![](https://user-images.githubusercontent.com/17789814/218678012-caffb4db-63ac-4355-89e4-db6a3fd41017.png)
+
+One can visualize the details of the topic i.e publishers, subscribers and the type of message it contains through the command:
+```bash
+rostopic info /turtle1/cmd_vel
+```
+
+Output:
+```
+Type: geometry_msgs/Twist
+
+Publishers: 
+ * /teleop_turtle (http://phani:39407/)
+
+Subscribers: 
+ * /turtlesim (http://phani:39091/)
+```
+
+### ROS parameter server
+ROS has a centralized parameter server that keeps track of a collection of values, to be queried by the nodes, that basically store configuration information that does not change (much) over time.
+
+## Creating our second package
+Lets try to apply the above concepts by .
+
+### Create a Package
+We create a new package called `image_pipeline` . This package depends on the libraries `rospy`, `cv_bridge`, `image_transport` and `sensor_msgs`
+
+```bash
+mkdir ~/catkin_ws/src/  # Create a directory
+cd ~/catkin_ws/src/     # Move to src directory
+catkin_create_pkg image_pipeline rospy cv_bridge image_transport sensor_msgs
+```
+
+### Create a node
+```bash
+cd image_pipeline/ && touch src/publisher.py # Create a empty file
+chmod a+x src/publisher.py # Execution permission
+```
+
+Open `publisher.py` in a text editor of your preference and copy paste the following code in publisher.py 
+
+```python
+#!/usr/bin/env python3
+
+import sys
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+
+class Publisher:
+    def __init__(self):
+        self.image_pub = rospy.Publisher("publisher", Image, queue_size=100)
+        self.bridge = CvBridge()
+        self.image_publisher()
+    def image_publisher(self,):
+        
+        frequency = rospy.get_param("/image_acquisition/frequency")
+        rate = rospy.Rate(frequency)
+        input_type = rospy.get_param("/image_acquisition/input_type")
+        
+        video_capture = None
+        if input_type == "camera_usb":
+            video_capture = cv2.VideoCapture(0)
+        else:
+            video_path = rospy.get_param("/image_acquisition/video/video_path_0")
+            video_capture = cv2.VideoCapture(video_path)
+        
+        while True:
+            ret, frame = video_capture.read()
+            if frame is not None:
+                msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
+                self.image_pub.publish(msg)
+                rate.sleep()
+def main(args):
+    rospy.init_node('publisher')
+    Publisher()
+if __name__ == '__main__':
+    main(sys.argv)
+```
+
+### Create a config file
+```bash
+cd ~/catkin_ws/src/image_pipeline/ && mkdir config/ && touch config/param.yaml
+```
+Copy paste the following code in `param.yml`
+
+```xml
+image_acquisition:
+  input_type: "camera_usb" #camera_usb, video
+  
+  camera_usb: 
+      camera_node: 1
+  
+  video:
+      video_node: 1
+      video_path_0: "/home/nullbyte/Desktop/myGit/ROS_Basics/ROS1/test_data/video/test_1.mp4"
+  
+  frequency: 10
+```
+
+### Create a Launch file
+```bash
+mkdir launch && touch launch/image_pipeline.launch # Create a empty lauch file
+```
+```bash
+image_pipeline.launch
+```
+
+```xml
+<launch>
+    <rosparam file="$(find image_pipeline)/config/param.yaml" />
+    <!-- image_pipeline launch file -->
+    <node pkg="image_pipeline" type="publisher.py" name="publisher"  output="screen">
+    </node>
+</launch>
+```
+
+### Compile
+```bash
+cd ~/catkin_ws/ # go to root directory of the packages
+catkin_make # Compile a ROS package
+source devel/setup.bash # Source the ROS env variable
+```
+
+### RUN
+```bash
+roslaunch image_pipeline image_pipeline.launch
+```
+
+#### output
+
+
+## Topic Subscriber
+### Create a node
+```bash
+cd image_pipeline/ && touch src/subscriber.py # Create a empty file
+chmod a+x src/subscriber.py # Execution permission
+```
+
+```bash
+subscriber.py
+```
+
+```python
+#!/usr/bin/env python3
+import sys
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+class Subscriber:
+    def __init__(self):
+        self.image_sub = rospy.Subscriber("publisher", Image, self.callback)
+        self.bridge = CvBridge()
+        
+    def callback(self,data):
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            cv2.imshow("Display", cv_image)
+            cv2.waitKey(1)
+        except CvBridgeError as e:
+            print(e)
+def main(args):
+    rospy.init_node('subscriber')
+    Subscriber()
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+if __name__ == '__main__':
+    main(sys.argv)
+```
+
+### Update the Launch file
+```bash
+image_pipeline.launch
+```
+
+```xml
+<launch>
+    <rosparam file="$(find image_pipeline)/config/param.yaml" />
+    <!-- image_pipeline launch file -->
+    <node pkg="image_pipeline" type="publisher.py" name="publisher"  output="screen">
+    </node>
+    <node pkg="image_pipeline" type="subscriber.py" name="subscriber"  output="screen">
+    </node>
+</launch>
+```
+
+### Compile and build the package
+```bash
+cd ~/catkin_ws/ # go to root directory of the packages
+catkin_make # Compile a ROS package
+source devel/setup.bash # Source the ROS env variable
+```
+
+### Launch your publisher and subscriber nodes
+```bash
+roslaunch image_pipeline image_pipeline.launch
+```
+
+#### Output
+
+
+
+
 
 ### ROS 
