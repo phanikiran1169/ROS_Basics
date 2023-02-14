@@ -312,8 +312,7 @@ The parameters in this server can be accessed through 3 ways:
   * To set the value of a parameter:
     `rosparam set parameter_name parameter_value`
   
-* C++/Python file
-  The python interface to ROS parameters is straightforward:
+* The python interface to ROS parameters is straightforward:
   * rospy.get_param()
   * rospy.set_param()
   
@@ -589,4 +588,14 @@ Subscribers:
  * /subscriber (http://phani:37603/)
 ```
 
+### Services
+ROS service calls communication has the following features:
 
+* It is bi-directional.
+* It one-to-one.
+
+A client node sends some data (called a request) to a server node and waits for a reply. The server, having received this request, takes some action (computing something, configuring hardware or software, changing its own behavior, etc.) and sends some data (called a response) back to the client.
+
+![](https://user-images.githubusercontent.com/17789814/218767053-7f393703-e0af-478c-9a15-cfdbbdd18980.png)
+
+A service data type determines the content of messages by a collection of named fields, and is divided into two parts, the request and the response.
