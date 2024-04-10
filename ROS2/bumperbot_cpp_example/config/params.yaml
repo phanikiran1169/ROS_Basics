@@ -1,0 +1,4 @@
+simple_parameter:
+  ros__parameters:
+    simple_int_param: 11
+    simple_string_param: "Simple ROS2 parameter example"

@@ -11,6 +11,12 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 
+install(
+  DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+
+)
+
 add_executable(simple_publisher src/simple_publisher.cpp)
 ament_target_dependencies(simple_publisher rclcpp std_msgs)
 
