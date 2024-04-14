@@ -10,11 +10,19 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
+find_package(turtlesim REQUIRED)
+
+include_directories(include)
 
 install(
   DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 
+)
+
+install(
+  DIRECTORY include
+  DESTINATION include
 )
 
 add_executable(simple_publisher src/simple_publisher.cpp)
@@ -26,10 +34,14 @@ ament_target_dependencies(simple_subscriber rclcpp std_msgs)
 add_executable(simple_parameter src/simple_parameter.cpp)
 ament_target_dependencies(simple_parameter rclcpp rcl_interfaces)
 
+add_executable(simple_turtlesim_kinematics src/simple_turtlesim_kinematics.cpp)
+ament_target_dependencies(simple_turtlesim_kinematics rclcpp turtlesim)
+
 install(TARGETS
   simple_publisher
   simple_subscriber
   simple_parameter
+  simple_turtlesim_kinematics
   DESTINATION lib/${PROJECT_NAME}
 )
 
