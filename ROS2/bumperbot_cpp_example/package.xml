@@ -4,7 +4,7 @@
   <name>bumperbot_cpp_example</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="parallels@todo.todo">Phani Kiran</maintainer>
+  <maintainer email="phanikiran1169@gmail.com">Phani Kiran</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -17,6 +17,8 @@
   <depend>tf2_ros</depend>
   <depend>geometry_msgs</depend>
   <depend>bumperbot_msgs</depend>
+
+  <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

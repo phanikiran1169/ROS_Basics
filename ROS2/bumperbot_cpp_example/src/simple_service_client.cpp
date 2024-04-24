@@ -52,10 +52,15 @@ private:
 int main(int argc, char* argv[])
 {
     rclcpp::init(argc, argv);
-    if (argc != 3) 
+    if (argc != 3)
     {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Wrong number of arguments! Usage: simple_service_client A B");
-        return 1;
+        // Condition to enable passing of arguments using launch file 
+        if ((argc == 4) && (strcmp(argv[3], "--ros-args")) != 0)
+        {
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("rclcpp"), "Wrong number of arguments! Usage: simple_service_client A B");
+            return 1;
+        }
+        
     }
 
     auto node = std::make_shared<SimpleServiceClient>(atoi(argv[1]), atoi(argv[2]));
