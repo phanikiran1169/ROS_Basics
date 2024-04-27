@@ -6,7 +6,10 @@ using std::placeholders::_1;
 SimpleController::SimpleController(const std::string& name)
                                    :Node(name),
                                     left_wheel_prev_pos_(0.0),
-                                    right_wheel_prev_pos_(0.0)
+                                    right_wheel_prev_pos_(0.0),
+                                    x_(0.0),
+                                    y_(0.0),
+                                    theta_(0.0)
 
 {
     declare_parameter("wheel_radius", 0.033);
@@ -62,8 +65,18 @@ void SimpleController::jointCallback(const sensor_msgs::msg::JointState &state)
     double linear = (wheel_radius_ * phi_right + wheel_radius_ * phi_left) / 2;
     double angular = (wheel_radius_ * phi_right - wheel_radius_ * phi_left) / wheel_separation_;
 
+    // Calculate the pose of the bumperbot (X, Y and theta)
+    double d_s = (wheel_radius_ * dp_right + wheel_radius_ * dp_left) / 2;
+    double d_theta = (wheel_radius_ * dp_right - wheel_radius_ * dp_left) / wheel_separation_;
+    theta_ += d_theta;
+    x_ += d_s * cos(theta_);
+    y_ += d_s * sin(theta_);
+
     RCLCPP_INFO_STREAM(get_logger(), "The linear velocity of the bumperbot is " << linear);
     RCLCPP_INFO_STREAM(get_logger(), "The angular velocity of the bumperbot is " << angular);
+    RCLCPP_INFO_STREAM(get_logger(), "x - " << x_);
+    RCLCPP_INFO_STREAM(get_logger(), "y - " << y_);
+    RCLCPP_INFO_STREAM(get_logger(), "theta - " << theta_);
 
 }
 

@@ -26,5 +26,8 @@ private:
     double right_wheel_prev_pos_;
     double left_wheel_prev_pos_;
     rclcpp::Time prev_time_;
+    double x_;
+    double y_;
+    double theta_;
     
 };
