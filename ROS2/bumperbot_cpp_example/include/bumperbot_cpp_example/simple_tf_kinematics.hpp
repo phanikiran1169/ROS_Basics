@@ -7,6 +7,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include "bumperbot_msgs/srv/get_transform.hpp"
+#include <tf2/LinearMath/Quaternion.h>
 #include <memory>
 
 class SimpleTfKinematics : public rclcpp::Node
@@ -34,5 +35,8 @@ private:
 
     double last_x_;
     double x_increment_;
+    tf2::Quaternion last_orientation_;
+    tf2::Quaternion orientation_increment_;
+    int rotations_counter_;
 
 };
