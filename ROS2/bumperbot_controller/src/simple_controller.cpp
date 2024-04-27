@@ -4,7 +4,9 @@
 using std::placeholders::_1;
 
 SimpleController::SimpleController(const std::string& name)
-                                   :Node(name)
+                                   :Node(name),
+                                    left_wheel_prev_pos_(0.0),
+                                    right_wheel_prev_pos_(0.0)
 
 {
     declare_parameter("wheel_radius", 0.033);
@@ -18,9 +20,12 @@ SimpleController::SimpleController(const std::string& name)
     wheel_cmd_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>("/simple_velocity_controller/commands", 10);
     vel_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("/bumperbot_controller/cmd_vel", 10, 
                                                                     std::bind(&SimpleController::velCallback, this, _1));
-
+    joint_sub_ = create_subscription<sensor_msgs::msg::JointState>("/joint_states", 10, std::bind(&SimpleController::jointCallback, this, _1));
     speed_conversion_ << wheel_radius_/2, wheel_radius_/2, wheel_radius_/wheel_separation_, -wheel_radius_/wheel_separation_;
     RCLCPP_INFO_STREAM(get_logger(), "The conversion matrix is \n" << speed_conversion_);
+
+    prev_time_ = get_clock()->now();
+
 }
 
 void SimpleController::velCallback(const geometry_msgs::msg::TwistStamped& msg)
@@ -32,6 +37,34 @@ void SimpleController::velCallback(const geometry_msgs::msg::TwistStamped& msg)
     wheel_speed_msg.data.push_back(wheel_speed.coeff(0)); // Angular velocity of right wheel
 
     wheel_cmd_pub_->publish(wheel_speed_msg);
+}
+
+void SimpleController::jointCallback(const sensor_msgs::msg::JointState &state)
+{
+    // Implements the inverse differential kinematic model
+    // Given the position of the wheels, calculates their velocities
+
+    double dp_left = state.position.at(1) - left_wheel_prev_pos_;
+    double dp_right = state.position.at(0) - right_wheel_prev_pos_;
+    rclcpp::Time msg_time = state.header.stamp;
+    rclcpp::Duration dt = msg_time - prev_time_;
+
+    // Update the prev pose for the next itheration
+    left_wheel_prev_pos_ = state.position.at(1);
+    right_wheel_prev_pos_ = state.position.at(0);
+    prev_time_ = state.header.stamp;
+
+    // Calculate the rotational speed of each wheel
+    double phi_left = dp_left / dt.seconds();
+    double phi_right = dp_right / dt.seconds();
+
+    // Calculate the linear and angular velocity of the bumperbot
+    double linear = (wheel_radius_ * phi_right + wheel_radius_ * phi_left) / 2;
+    double angular = (wheel_radius_ * phi_right - wheel_radius_ * phi_left) / wheel_separation_;
+
+    RCLCPP_INFO_STREAM(get_logger(), "The linear velocity of the bumperbot is " << linear);
+    RCLCPP_INFO_STREAM(get_logger(), "The angular velocity of the bumperbot is " << angular);
+
 }
 
 int main(int argc, char* argv[])
