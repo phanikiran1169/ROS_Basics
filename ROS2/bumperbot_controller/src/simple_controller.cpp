@@ -36,6 +36,10 @@ SimpleController::SimpleController(const std::string& name)
     odom_msg_.pose.pose.orientation.y = 0.0;
     odom_msg_.pose.pose.orientation.z = 0.0;
     odom_msg_.pose.pose.orientation.w = 1.0;
+
+    transform_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    transform_stamped_.header.frame_id = "odom";
+    transform_stamped_.child_frame_id = "base_footprint";
     
     prev_time_ = get_clock()->now();
 
@@ -101,6 +105,17 @@ void SimpleController::jointCallback(const sensor_msgs::msg::JointState &state)
     odom_msg_.twist.twist.linear.x = linear;
     odom_msg_.twist.twist.angular.z = angular;
     odom_pub_->publish(odom_msg_);
+
+    // TF
+    transform_stamped_.transform.translation.x = x_;
+    transform_stamped_.transform.translation.y = y_;
+    transform_stamped_.transform.rotation.x = q.getX();
+    transform_stamped_.transform.rotation.y = q.getY();
+    transform_stamped_.transform.rotation.z = q.getZ();
+    transform_stamped_.transform.rotation.w = q.getW();
+    transform_stamped_.header.stamp = get_clock()->now();
+    transform_broadcaster_->sendTransform(transform_stamped_);
+
 
 
 }
