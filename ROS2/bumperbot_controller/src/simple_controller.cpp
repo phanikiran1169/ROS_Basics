@@ -1,5 +1,6 @@
 #include "bumperbot_controller/simple_controller.hpp"
 #include <Eigen/Geometry>
+#include <tf2/LinearMath/Quaternion.h>
 
 using std::placeholders::_1;
 
@@ -24,9 +25,18 @@ SimpleController::SimpleController(const std::string& name)
     vel_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("/bumperbot_controller/cmd_vel", 10, 
                                                                     std::bind(&SimpleController::velCallback, this, _1));
     joint_sub_ = create_subscription<sensor_msgs::msg::JointState>("/joint_states", 10, std::bind(&SimpleController::jointCallback, this, _1));
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("/bumperbot_controller/odom", 10);
     speed_conversion_ << wheel_radius_/2, wheel_radius_/2, wheel_radius_/wheel_separation_, -wheel_radius_/wheel_separation_;
     RCLCPP_INFO_STREAM(get_logger(), "The conversion matrix is \n" << speed_conversion_);
 
+    // Fill the Odometry message with invariant parameters
+    odom_msg_.header.frame_id = "odom";
+    odom_msg_.child_frame_id = "base_footprint";
+    odom_msg_.pose.pose.orientation.x = 0.0;
+    odom_msg_.pose.pose.orientation.y = 0.0;
+    odom_msg_.pose.pose.orientation.z = 0.0;
+    odom_msg_.pose.pose.orientation.w = 1.0;
+    
     prev_time_ = get_clock()->now();
 
 }
@@ -77,6 +87,21 @@ void SimpleController::jointCallback(const sensor_msgs::msg::JointState &state)
     RCLCPP_INFO_STREAM(get_logger(), "x - " << x_);
     RCLCPP_INFO_STREAM(get_logger(), "y - " << y_);
     RCLCPP_INFO_STREAM(get_logger(), "theta - " << theta_);
+
+    // Compose and publish the odom message
+    tf2::Quaternion q;
+    q.setRPY(0, 0, theta_);
+    odom_msg_.header.stamp = get_clock()->now();
+    odom_msg_.pose.pose.position.x = x_;
+    odom_msg_.pose.pose.position.y = y_;
+    odom_msg_.pose.pose.orientation.x = q.getX();
+    odom_msg_.pose.pose.orientation.y = q.getY();
+    odom_msg_.pose.pose.orientation.z = q.getZ();
+    odom_msg_.pose.pose.orientation.w = q.getW();
+    odom_msg_.twist.twist.linear.x = linear;
+    odom_msg_.twist.twist.angular.z = angular;
+    odom_pub_->publish(odom_msg_);
+
 
 }
 

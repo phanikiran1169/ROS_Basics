@@ -5,6 +5,7 @@
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <Eigen/Core>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 class SimpleController : public rclcpp::Node
 {
@@ -18,6 +19,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr vel_sub_;
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr wheel_cmd_pub_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
 
     double wheel_radius_;
     double wheel_separation_;
@@ -29,5 +31,7 @@ private:
     double x_;
     double y_;
     double theta_;
+
+    nav_msgs::msg::Odometry odom_msg_;
     
 };
