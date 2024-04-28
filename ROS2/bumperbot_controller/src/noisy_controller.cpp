@@ -22,11 +22,11 @@ NoisyController::NoisyController(const std::string& name)
     RCLCPP_INFO_STREAM(get_logger(), "Using wheel separation " << wheel_separation_);
     
     joint_sub_ = create_subscription<sensor_msgs::msg::JointState>("/joint_states", 10, std::bind(&NoisyController::jointCallback, this, _1));
-    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("/bumperbot_controller/odom", 10);
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("/bumperbot_controller/odom_noisy", 10);
 
     // Fill the Odometry message with invariant parameters
     odom_msg_.header.frame_id = "odom";
-    odom_msg_.child_frame_id = "base_footprint";
+    odom_msg_.child_frame_id = "base_footprint_ekf";
     odom_msg_.pose.pose.orientation.x = 0.0;
     odom_msg_.pose.pose.orientation.y = 0.0;
     odom_msg_.pose.pose.orientation.z = 0.0;
@@ -34,7 +34,7 @@ NoisyController::NoisyController(const std::string& name)
 
     transform_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     transform_stamped_.header.frame_id = "odom";
-    transform_stamped_.child_frame_id = "base_footprint";
+    transform_stamped_.child_frame_id = "base_footprint_noisy";
     
     prev_time_ = get_clock()->now();
 
